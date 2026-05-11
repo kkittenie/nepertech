@@ -17,18 +17,28 @@
     }
 
     :root {
-      --primary-blue: #0A2540;      /* biru tua utama untuk teks bold & aksen */
-      --deep-blue: #1A3A5C;         /* biru medium untuk hover */
-      --black-soft: #1A1A1A;        /* hitam lembut untuk teks utama */
-      --gray-light: #F5F7FA;        /* abu sangat terang untuk bg card */
-      --gray-border: #E2E8F0;        /* border tipis */
-      --text-dark: #1A1A1A;          /* teks utama hitam */
-      --text-muted: #4A5568;         /* teks sekunder abu gelap */
+      --primary-blue: #0A2540;
+      --deep-blue: #1A3A5C;
+      --black-soft: #1A1A1A;
+      --gray-light: #F5F7FA;
+      --gray-border: #E2E8F0;
+      --text-dark: #1A1A1A;
+      --text-muted: #4A5568;
       --white: #FFFFFF;
-      --accent-blue: #2C6B9E;        /* biru untuk hover & aksen */
+      --accent-blue: #2C6B9E;
       --shadow-sm: 0 10px 30px -12px rgba(0,0,0,0.08);
       --shadow-md: 0 20px 35px -10px rgba(0,0,0,0.1);
       --transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+
+    /* Hide default cursor on desktop */
+    @media (min-width: 769px) {
+      body {
+        cursor: none;
+      }
+      a, button, .btn, .card, .gallery-item, .nav-link, .card-link, [data-page] {
+        cursor: none;
+      }
     }
 
     body {
@@ -37,6 +47,55 @@
       color: var(--text-dark);
       overflow-x: hidden;
       line-height: 1.5;
+    }
+
+    /* ==================== CUSTOM MAGNETIC CURSOR ==================== */
+    .cursor-dot {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: var(--primary-blue);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transition: transform 0.15s ease;
+      transform: translate(-50%, -50%);
+    }
+
+    .cursor-ring {
+      position: fixed;
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--primary-blue);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transition: width 0.25s ease, height 0.25s ease, background 0.2s ease, border-color 0.2s ease;
+      transform: translate(-50%, -50%);
+      opacity: 0.7;
+    }
+
+    /* Hover effect for interactive elements */
+    .cursor-hover .cursor-ring {
+      width: 64px;
+      height: 64px;
+      background: rgba(10,37,64,0.1);
+      border-color: var(--accent-blue);
+      opacity: 1;
+    }
+
+    .cursor-click .cursor-ring {
+      width: 30px;
+      height: 30px;
+      background: rgba(10,37,64,0.2);
+      transition: all 0.1s ease;
+    }
+
+    /* Hide cursor on mobile */
+    @media (max-width: 768px) {
+      .cursor-dot, .cursor-ring {
+        display: none;
+      }
     }
 
     /* ==================== TYPOGRAPHY ==================== */
@@ -544,6 +603,10 @@
 </head>
 <body>
 
+  <!-- Custom Magnetic Cursor Elements -->
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
   <nav class="navbar" id="navbar">
     <div class="nav-container">
       <a href="#" class="logo" data-page="beranda">EduNova</a>
@@ -563,7 +626,78 @@
   <main id="app"></main>
 
   <script>
-    // DATA DUMMY
+    // ==================== MAGNETIC CURSOR WITH LERP (SMOOTH FOLLOW) ====================
+    (function initMagneticCursor() {
+      // Only run on desktop
+      if (window.innerWidth <= 768) return;
+      
+      const dot = document.getElementById('cursorDot');
+      const ring = document.getElementById('cursorRing');
+      
+      if (!dot || !ring) return;
+      
+      let mouseX = 0, mouseY = 0;
+      let ringX = 0, ringY = 0;
+      let dotX = 0, dotY = 0;
+      
+      // Track mouse position
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+      
+      // Smooth follow animation with lerp
+      function animateCursor() {
+        // Smooth lerp for ring (slower, more elegant)
+        ringX += (mouseX - ringX) * 0.12;
+        ringY += (mouseY - ringY) * 0.12;
+        // Dot follows faster
+        dotX += (mouseX - dotX) * 0.25;
+        dotY += (mouseY - dotY) * 0.25;
+        
+        ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+        dot.style.transform = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
+        
+        requestAnimationFrame(animateCursor);
+      }
+      
+      animateCursor();
+      
+      // Add hover effect class to body when over interactive elements
+      const interactiveElements = document.querySelectorAll('a, button, .btn, .card, .gallery-item, .nav-link, .card-link, [data-page], .logo');
+      
+      interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          document.body.classList.add('cursor-hover');
+        });
+        el.addEventListener('mouseleave', () => {
+          document.body.classList.remove('cursor-hover');
+        });
+      });
+      
+      // Click effect
+      document.addEventListener('mousedown', () => {
+        document.body.classList.add('cursor-click');
+        setTimeout(() => {
+          document.body.classList.remove('cursor-click');
+        }, 150);
+      });
+      
+      // Handle dynamically added elements (for page changes)
+      const observer = new MutationObserver(() => {
+        const newInteractives = document.querySelectorAll('a, button, .btn, .card, .gallery-item, .nav-link, .card-link, [data-page], .logo');
+        newInteractives.forEach(el => {
+          if (!el.hasAttribute('data-cursor-bound')) {
+            el.setAttribute('data-cursor-bound', 'true');
+            el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+          }
+        });
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    })();
+
+    // ==================== DATA DUMMY ====================
     const beritaData = [
       { id:1, judul:"Prestasi Olimpiade Sains Internasional", tgl:"12 Mei 2025", excerpt:"Siswa kami berhasil meraih medali emas di ajang Olimpiade Sains Dunia.", img:"https://picsum.photos/id/20/600/400" },
       { id:2, judul:"Workshop AI & Robotics", tgl:"5 April 2025", excerpt:"Pelatihan intensif kecerdasan buatan bersama praktisi global.", img:"https://picsum.photos/id/26/600/400" },
@@ -659,7 +793,7 @@
       reveals.forEach(el => observer.observe(el));
     }
 
-    // RENDER FUNCTIONS
+    // RENDER FUNCTIONS (sama seperti sebelumnya)
     function renderHome() {
       return `
         <section class="hero">
@@ -687,21 +821,13 @@
             </svg>
           </div>
         </section>
-
         <div class="container"><div style="height:10px;"></div></div>
-
         <section><div class="container"><div class="section-header reveal"><span class="section-tag">Tentang Kami</span><h2>Mencetak Pemimpin <span class="gradient-text">Digital</span></h2></div><div class="grid-3 reveal">${[1,2,3].map(i=>`<div class="card"><i class="fas fa-graduation-cap card-icon"></i><h3>Visi & Misi</h3><p>Menciptakan generasi unggul yang berdaya saing global dengan berlandaskan integritas dan inovasi.</p><a href="#" class="card-link">Selengkapnya <i class="fas fa-arrow-right"></i></a></div>`).join('')}</div></div></section>
-
         <section style="background: #F8FAFE;"><div class="container"><div class="section-header reveal"><span class="section-tag">Program Unggulan</span><h2>Pilihan <span class="gradient-text">Kompetensi</span></h2></div><div class="grid-3 reveal">${programList.map(p=>`<div class="card"><i class="${p.icon} card-icon"></i><h3>${p.nama}</h3><p>${p.desc}</p><a href="#" class="card-link">Jelajahi <i class="fas fa-arrow-right"></i></a></div>`).join('')}</div></div></section>
-
         <section><div class="container"><div class="section-header reveal"><span class="section-tag">Fasilitas</span><h2>Lingkungan <span class="gradient-text">Premium</span></h2></div><div class="grid-3 reveal">${fasilitasList.map(f=>`<div class="card"><i class="${f.icon} card-icon"></i><h3>${f.nama}</h3><p>${f.desc}</p></div>`).join('')}</div></div></section>
-
         <section style="background: #F8FAFE;"><div class="container"><div class="section-header reveal"><span class="section-tag">Galeri Kegiatan</span><h2>Momen <span class="gradient-text">Terbaik</span></h2></div><div class="gallery-grid reveal">${galeriFoto.slice(0,6).map(url=>`<div class="gallery-item"><img src="${url}" alt="galeri"><div class="gallery-overlay"><i class="fas fa-search-plus" style="font-size:28px;color:white;"></i></div></div>`).join('')}</div></div></section>
-
         <section><div class="container"><div class="section-header reveal"><span class="section-tag">Berita & Artikel</span><h2>Update <span class="gradient-text">Terkini</span></h2></div><div class="grid-3 reveal">${beritaData.map(b=>`<div class="card"><img src="${b.img}" style="width:100%;height:180px;object-fit:cover;border-radius:16px;margin-bottom:20px;"><h3>${b.judul}</h3><p style="font-size:13px;color:#7C8B9B;">${b.tgl}</p><p>${b.excerpt.substring(0,85)}...</p><a href="#" class="card-link">Baca <i class="fas fa-arrow-right"></i></a></div>`).join('')}</div></div></section>
-
         <div class="cta-section reveal"><div class="container"><h2>Siap Bergabung <span style="color:white;">Bersama Kami?</span></h2><p>Daftarkan dirimu sekarang dan raih masa depan gemilang bersama EduNova.</p><a href="#" data-page="pendaftaran" class="btn btn-primary btn-arrow">Daftar Sekarang <i class="fas fa-arrow-right"></i></a></div></div>
-
         ${renderFooter()}
       `;
     }
@@ -747,7 +873,7 @@
     }
 
     function renderFooter() {
-      return `<footer class="footer"><div class="container"><div class="footer-grid"><div class="footer-col"><h4>EduNova</h4><p>Sekolah digital premium dengan visi global dan kurikulum masa depan.</p></div><div class="footer-col"><h4>Program</h4><a href="#">Sains & Teknologi</a><a href="#">Bisnis Digital</a><a href="#">Seni & Desain</a></div><div class="footer-col"><h4>Tautan Cepat</h4><a href="#">PPDB 2026</a><a href="#">Karir</a><a href="#">Beasiswa</a></div><div class="footer-col"><h4>Kontak</h4><p>📞 +62 812 3456 7890</p><p>✉️ info@edunova.sch.id</p></div></div><div class="footer-bottom"><span>© 2025 EduNova — All rights reserved. Designed with clean aesthetics.</span></div></div></footer>`;
+      return `<footer class="footer"><div class="container"><div class="footer-grid"><div class="footer-col"><h4>EduNova</h4><p>Sekolah digital premium dengan visi global dan kurikulum masa depan.</p></div><div class="footer-col"><h4>Program</h4><a href="#">Sains & Teknologi</a><a href="#">Bisnis Digital</a><a href="#">Seni & Desain</a></div><div class="footer-col"><h4>Tautan Cepat</h4><a href="#">PPDB 2026</a><a href="#">Karir</a><a href="#">Beasiswa</a></div><div class="footer-col"><h4>Kontak</h4><p>📞 +62 812 3456 7890</p><p>✉️ info@edunova.sch.id</p></div></div><div class="footer-bottom"><span>© 2025 EduNova — All rights reserved. Designed with clean aesthetics + magnetic cursor.</span></div></div></footer>`;
     }
 
     // ROUTING & NAVIGATION
