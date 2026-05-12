@@ -1,5 +1,4 @@
-
-    // ==================== CURSOR ====================
+// ==================== CURSOR ====================
     (function initCursor() {
       if (window.innerWidth <= 768) return;
       const dot = document.getElementById('cursorDot');
@@ -48,7 +47,7 @@
       { nama:"Arena Olahraga", desc:"Futsal, basket, kolam renang, dan fasilitas fitness premium.", icon:"fas fa-futbol" }
     ];
 
-    // ==================== LAYANAN (updated) ====================
+    // ==================== LAYANAN ====================
     const layananList = [
       { nama:"Website Development", desc:"Perancangan dan pengembangan website profesional, responsif, dan SEO-friendly — dari company profile hingga e-commerce dinamis.", icon:"fas fa-globe" },
       { nama:"Mobile App", desc:"Aplikasi mobile inovatif dan intuitif untuk Android & iOS, dengan pengalaman pengguna yang mulus dan modern.", icon:"fas fa-mobile-alt" },
@@ -92,7 +91,8 @@
           item.addEventListener('click', () => showLightbox(item.querySelector('img').src));
         });
       }
-      if(page === "beranda") animateCounters();
+      if(page === "beranda") { animateCounters(); initNilaiCarousel(); }
+      if(page === "profil") initNilaiCarousel();
       if(page === "pendaftaran") initMultiStep();
     }
 
@@ -126,6 +126,135 @@
         }
         requestAnimationFrame(update);
       });
+    }
+
+    // ==================== NILAI CAROUSEL ====================
+    function initNilaiCarousel() {
+      const carousel = document.querySelector('.nilai-carousel-track');
+      const prevBtn = document.querySelector('.carousel-btn-prev');
+      const nextBtn = document.querySelector('.carousel-btn-next');
+      const dotsWrap = document.querySelector('.carousel-dots');
+      if (!carousel) return;
+
+      const cards = Array.from(carousel.children);
+      let currentIdx = 0;
+      let isDragging = false;
+      let startX = 0;
+      let scrollStart = 0;
+
+      // Build dots
+      if (dotsWrap) {
+        dotsWrap.innerHTML = '';
+        cards.forEach((_, i) => {
+          const dot = document.createElement('button');
+          dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+          dot.setAttribute('aria-label', `Nilai ${i+1}`);
+          dot.addEventListener('click', () => goTo(i));
+          dotsWrap.appendChild(dot);
+        });
+      }
+
+      function getCardWidth() {
+        if (!cards[0]) return 320;
+        const style = window.getComputedStyle(carousel);
+        const gap = parseFloat(style.gap) || 24;
+        return cards[0].offsetWidth + gap;
+      }
+
+      function goTo(idx) {
+        currentIdx = Math.max(0, Math.min(idx, cards.length - 1));
+        const offset = currentIdx * getCardWidth();
+        carousel.scrollTo({ left: offset, behavior: 'smooth' });
+        updateUI();
+      }
+
+      function updateUI() {
+        if (prevBtn) prevBtn.classList.toggle('disabled', currentIdx === 0);
+        if (nextBtn) nextBtn.classList.toggle('disabled', currentIdx >= cards.length - 1);
+        if (dotsWrap) {
+          dotsWrap.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === currentIdx));
+        }
+        // Highlight active card
+        cards.forEach((c, i) => {
+          c.classList.toggle('nilai-card-active', i === currentIdx);
+        });
+      }
+
+      function syncFromScroll() {
+        const cardW = getCardWidth();
+        const nearest = Math.round(carousel.scrollLeft / cardW);
+        if (nearest !== currentIdx) {
+          currentIdx = Math.max(0, Math.min(nearest, cards.length - 1));
+          updateUI();
+        }
+      }
+
+      if (prevBtn) prevBtn.addEventListener('click', () => goTo(currentIdx - 1));
+      if (nextBtn) nextBtn.addEventListener('click', () => goTo(currentIdx + 1));
+
+      // Mouse drag
+      carousel.addEventListener('mousedown', e => {
+        isDragging = true;
+        startX = e.pageX;
+        scrollStart = carousel.scrollLeft;
+        carousel.style.cursor = 'grabbing';
+        carousel.style.scrollSnapType = 'none';
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        const dx = e.pageX - startX;
+        carousel.scrollLeft = scrollStart - dx;
+      });
+      document.addEventListener('mouseup', e => {
+        if (!isDragging) return;
+        isDragging = false;
+        carousel.style.cursor = '';
+        carousel.style.scrollSnapType = '';
+        // snap to nearest
+        const dx = e.pageX - startX;
+        if (Math.abs(dx) > 40) {
+          goTo(dx < 0 ? currentIdx + 1 : currentIdx - 1);
+        } else {
+          goTo(currentIdx);
+        }
+      });
+
+      // Touch swipe
+      let touchStartX = 0;
+      carousel.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+      carousel.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(dx) > 40) goTo(dx < 0 ? currentIdx + 1 : currentIdx - 1);
+      }, { passive: true });
+
+      // Scroll sync
+      carousel.addEventListener('scroll', syncFromScroll, { passive: true });
+
+      // Keyboard
+      carousel.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft') goTo(currentIdx - 1);
+        if (e.key === 'ArrowRight') goTo(currentIdx + 1);
+      });
+
+      // Auto progress (pauses on hover)
+      let autoInterval = setInterval(() => {
+        const next = currentIdx + 1 < cards.length ? currentIdx + 1 : 0;
+        goTo(next);
+      }, 4500);
+      const carouselSection = document.querySelector('.nilai-carousel-section');
+      if (carouselSection) {
+        carouselSection.addEventListener('mouseenter', () => clearInterval(autoInterval));
+        carouselSection.addEventListener('mouseleave', () => {
+          clearInterval(autoInterval);
+          autoInterval = setInterval(() => {
+            const next = currentIdx + 1 < cards.length ? currentIdx + 1 : 0;
+            goTo(next);
+          }, 4500);
+        });
+      }
+
+      updateUI();
     }
 
     let step = 1;
@@ -163,6 +292,55 @@
     }
 
     // ==================== RENDER FUNCTIONS ====================
+
+    function renderNilaiCarousel() {
+      return `
+        <section class="nilai-carousel-section reveal">
+          <div class="container">
+            <div class="section-header" style="margin-bottom:48px">
+              <span class="section-tag">Nilai Perusahaan</span>
+              <h2>Panduan <span class="gradient-text">Setiap Langkah</span></h2>
+              <p class="section-desc">Empat nilai inti yang menjadi fondasi dalam setiap proses kerja NeperTech.</p>
+            </div>
+
+            <div class="carousel-wrapper">
+              <!-- Nav Buttons -->
+              <button class="carousel-btn carousel-btn-prev" aria-label="Sebelumnya">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="carousel-btn carousel-btn-next" aria-label="Berikutnya">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+
+              <!-- Track -->
+              <div class="nilai-carousel-track" tabindex="0">
+                ${nilaiList.map((n, i) => `
+                  <div class="nilai-card" style="--idx:${i}">
+                    <div class="nilai-card-number">${String(i+1).padStart(2,'0')}</div>
+                    <div class="nilai-card-icon-wrap">
+                      <i class="${n.icon}"></i>
+                    </div>
+                    <h3 class="nilai-card-title">${n.nama}</h3>
+                    <p class="nilai-card-desc">${n.desc}</p>
+                    <div class="nilai-card-bar"></div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <!-- Dots -->
+              <div class="carousel-dots"></div>
+            </div>
+
+            <!-- Progress indicator -->
+            <div class="carousel-progress-wrap">
+              <div class="carousel-progress-line">
+                <div class="carousel-progress-fill"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
 
     function renderHome() {
       return `
@@ -290,23 +468,8 @@
           </div>
         </section>
 
-        <!-- Nilai Perusahaan -->
-        <section>
-          <div class="container">
-            <div class="section-header reveal">
-              <span class="section-tag">Nilai Perusahaan</span>
-              <h2>Panduan <span class="gradient-text">Setiap Langkah</span></h2>
-              <p class="section-desc">Empat nilai inti yang menjadi fondasi dalam setiap proses kerja NeperTech.</p>
-            </div>
-            <div class="grid-3">
-              ${nilaiList.map((n,i) => `
-                <div class="card reveal" style="transition-delay:${i*.12}s">
-                  <div class="card-icon-wrap"><i class="${n.icon}"></i></div>
-                  <h3>${n.nama}</h3><p>${n.desc}</p>
-                </div>`).join('')}
-            </div>
-          </div>
-        </section>
+        <!-- Nilai Perusahaan — CAROUSEL -->
+        ${renderNilaiCarousel()}
 
         <!-- Gallery -->
         <section class="section-alt">
@@ -404,7 +567,6 @@
               <h2>Arah & <span class="gradient-text">Tujuan</span></h2>
             </div>
             <div class="visi-misi-grid reveal">
-              <!-- Visi -->
               <div class="card visi-card">
                 <div class="card-icon-wrap"><i class="fas fa-eye"></i></div>
                 <h3>Visi</h3>
@@ -412,7 +574,6 @@
                   Menjadi pengembang perangkat lunak berbasis pendidikan yang <strong>terdepan, terpercaya, dan inovatif</strong>, serta menjadi pusat unggulan (<em>center of excellence</em>) dalam penyiapan dan pengembangan talenta muda digital yang berdaya saing global.
                 </p>
               </div>
-              <!-- Misi -->
               <div class="card">
                 <div class="card-icon-wrap"><i class="fas fa-rocket"></i></div>
                 <h3>Misi</h3>
@@ -425,21 +586,10 @@
             </div>
           </section>
 
-          <!-- Nilai Perusahaan -->
-          <section>
-            <div class="section-header reveal">
-              <span class="section-tag">Company Values</span>
-              <h2>Nilai-Nilai <span class="gradient-text">Perusahaan</span></h2>
-              <p class="section-desc">Nilai-nilai ini menjadi panduan dalam setiap proses kerja NeperTech.</p>
-            </div>
-            <div class="grid-3">
-              ${nilaiList.map((n,i) => `
-                <div class="card reveal" style="transition-delay:${i*.12}s">
-                  <div class="card-icon-wrap"><i class="${n.icon}"></i></div>
-                  <h3>${n.nama}</h3><p>${n.desc}</p>
-                </div>`).join('')}
-            </div>
-          </section>
+          <!-- Nilai Perusahaan — CAROUSEL -->
+        </div>
+        ${renderNilaiCarousel()}
+        <div class="container">
 
           <!-- Struktur Organisasi -->
           <section>
@@ -484,7 +634,6 @@
             </div>
           </section>
 
-          <!-- Kenapa pilih NeperTech -->
           <section>
             <div class="section-header reveal">
               <span class="section-tag">Keunggulan Kami</span>

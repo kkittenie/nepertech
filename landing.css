@@ -875,3 +875,272 @@ section { padding: 90px 0; }
   .cta-inner { padding: 48px 24px; }
   .container { padding: 0 20px; }
 }
+/* ==================== NILAI CAROUSEL ==================== */
+
+.nilai-carousel-section {
+  padding: 90px 0;
+  background: linear-gradient(160deg, #f0f5fb 0%, #fafbff 60%, #eef3fa 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle background decoration */
+.nilai-carousel-section::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(44,107,158,0.07) 0%, transparent 65%);
+  pointer-events: none;
+}
+.nilai-carousel-section::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: -60px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(10,37,64,0.05) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+/* ---- Wrapper ---- */
+.carousel-wrapper {
+  position: relative;
+}
+
+/* ---- Track ---- */
+.nilai-carousel-track {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 4px 24px;
+  cursor: grab;
+  outline: none;
+
+  /* Hide scrollbar cross-browser */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.nilai-carousel-track::-webkit-scrollbar { display: none; }
+.nilai-carousel-track:active { cursor: grabbing; }
+
+/* ---- Card ---- */
+.nilai-card {
+  flex: 0 0 320px;
+  min-width: 0;
+  scroll-snap-align: start;
+  background: var(--white);
+  border: 1.5px solid var(--gray-border);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px 32px;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.4s var(--ease),
+    border-color 0.35s ease;
+  box-shadow: 0 4px 20px rgba(10,37,64,0.06);
+  animation: nilaiCardIn 0.55s var(--ease) both;
+  animation-delay: calc(var(--idx) * 0.1s);
+}
+
+@keyframes nilaiCardIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Active / hover state */
+.nilai-card.nilai-card-active,
+.nilai-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 24px 56px rgba(10,37,64,0.14);
+  border-color: var(--accent);
+}
+
+/* Top accent bar */
+.nilai-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease);
+  border-radius: 99px 99px 0 0;
+}
+.nilai-card.nilai-card-active::before,
+.nilai-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Large ghost number */
+.nilai-card-number {
+  font-family: 'Inter', sans-serif;
+  font-size: 80px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--primary);
+  opacity: 0.055;
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  letter-spacing: -0.05em;
+  user-select: none;
+  transition: opacity 0.3s;
+}
+.nilai-card.nilai-card-active .nilai-card-number,
+.nilai-card:hover .nilai-card-number { opacity: 0.1; }
+
+/* Icon */
+.nilai-card-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: rgba(10,37,64,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  transition: background 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+.nilai-card-icon-wrap i { font-size: 22px; color: var(--primary); transition: color 0.3s; }
+.nilai-card.nilai-card-active .nilai-card-icon-wrap,
+.nilai-card:hover .nilai-card-icon-wrap {
+  background: var(--primary);
+  transform: scale(1.12) rotate(-5deg);
+}
+.nilai-card.nilai-card-active .nilai-card-icon-wrap i,
+.nilai-card:hover .nilai-card-icon-wrap i { color: white; }
+
+/* Title */
+.nilai-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+/* Desc */
+.nilai-card-desc {
+  font-size: 14.5px;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+/* Bottom accent bar */
+.nilai-card-bar {
+  margin-top: 24px;
+  height: 2px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s var(--ease);
+}
+.nilai-card.nilai-card-active .nilai-card-bar,
+.nilai-card:hover .nilai-card-bar { transform: scaleX(1); }
+
+/* ---- Nav Buttons ---- */
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gray-border);
+  background: var(--white);
+  color: var(--primary);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 4px 16px rgba(10,37,64,0.1);
+}
+.carousel-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 8px 24px rgba(10,37,64,0.22);
+}
+.carousel-btn.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.carousel-btn-prev { left: -22px; }
+.carousel-btn-next { right: -22px; }
+
+@media (max-width: 768px) {
+  .carousel-btn { display: none; }
+}
+
+/* ---- Dots ---- */
+.carousel-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  border: none;
+  background: var(--gray-border);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+.carousel-dot.active {
+  background: var(--primary);
+  width: 28px;
+}
+.carousel-dot:hover:not(.active) {
+  background: var(--accent);
+  transform: scale(1.15);
+}
+
+/* ---- Progress Line ---- */
+.carousel-progress-wrap {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+.carousel-progress-line {
+  width: min(260px, 90%);
+  height: 2px;
+  background: var(--gray-border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.carousel-progress-fill {
+  height: 100%;
+  width: 25%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 99px;
+  transition: width 0.45s var(--ease);
+}
+
+/* ---- Responsive card widths ---- */
+@media (min-width: 1100px) {
+  .nilai-card { flex: 0 0 300px; }
+}
+@media (max-width: 600px) {
+  .nilai-card {
+    flex: 0 0 calc(90vw - 48px);
+    padding: 28px 24px 24px;
+  }
+  .nilai-carousel-section { padding: 60px 0; }
+}
